@@ -4,7 +4,7 @@
 // 3. jab signup ya login success ho jaye → us user ka JWT banana hai
 // aur response me token + basic user info bhejna hai
 import express from "express";
-import User from "../models/User";
+import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
@@ -38,6 +38,7 @@ router.post("/signup", async (req, res) => {
       // isliye newUser._id se token banana padta hai
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Error signing up" });
   }
 });
