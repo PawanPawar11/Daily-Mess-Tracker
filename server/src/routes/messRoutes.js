@@ -1,6 +1,6 @@
 import express from "express";
-import auth from "../middleware/authMiddleware";
-import Mess from "../models/Mess";
+import auth from "../middleware/authMiddleware.js";
+import Mess from "../models/Mess.js";
 
 const router = express.Router();
 
@@ -15,6 +15,8 @@ router.post("/create", auth, async (req, res) => {
       mess.startDate = startDate;
       mess.totalThalis = totalThalis;
       mess.amountPerThali = amountPerThali;
+
+      await mess.save();
     }
 
     const newMess = Mess.create({
