@@ -35,4 +35,21 @@ router.add("/add", auth, async (req, res) => {
   }
 });
 
+router.add("/month/:year/:month", auth, async (req, res) => {
+  try {
+    const { month, year } = req.params;
+
+    const prefix = `${year}-${month.padStart(2, "0")}`;
+
+    MessLog.find({
+      userId: req.user._id,
+      date: { $regex: `^${prefix}` },
+    });
+
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching logs" });
+  }
+});
+
 export default router;
