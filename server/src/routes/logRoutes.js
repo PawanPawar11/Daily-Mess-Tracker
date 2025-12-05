@@ -4,7 +4,7 @@ import MessLog from "../models/MessLog.js";
 
 const router = express.Router();
 
-router.add("/add", auth, async (req, res) => {
+router.post("/add", auth, async (req, res) => {
   try {
     const { date, timesVisited, reason } = req.body;
 
@@ -35,13 +35,13 @@ router.add("/add", auth, async (req, res) => {
   }
 });
 
-router.add("/month/:year/:month", auth, async (req, res) => {
+router.get("/month/:year/:month", auth, async (req, res) => {
   try {
     const { month, year } = req.params;
 
     const prefix = `${year}-${month.padStart(2, "0")}`;
 
-    MessLog.find({
+    const logs = await MessLog.find({
       userId: req.user._id,
       date: { $regex: `^${prefix}` },
     });
