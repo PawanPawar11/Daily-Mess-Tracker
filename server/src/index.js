@@ -5,6 +5,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import messRoutes from "./routes/messRoutes.js";
 import logRoutes from "./routes/logRoutes.js";
+import statsRoutes from "./routes/statsRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -21,6 +22,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/mess", messRoutes);
 app.use("/api/logs", logRoutes);
+app.use("/api/stats", statsRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
