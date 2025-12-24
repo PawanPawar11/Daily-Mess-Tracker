@@ -60,11 +60,32 @@ const MessLogs = () => {
         fetchLogs();
     }
 
-    const downloadCSV = () => {
-        window.open(
-            `http://localhost:5000/api/export/csv/${year}/${month}`,
-            "_blank"
+    const downloadCSV = async () => {
+        const res = await fetch(
+            `http://localhost:3000/api/export/csv/${year}/${month}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
         );
+
+        if (!res.ok) {
+            alert("Failed to download CSV");
+            return;
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `mess-logs-${year}-${month}.csv`;
+        document.body.appendChild(a);
+        a.click();
+
+        a.remove();
+        window.URL.revokeObjectURL(url);
     };
 
     return (

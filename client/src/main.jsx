@@ -7,6 +7,7 @@ import Signup from "./pages/Signup.jsx"
 import './index.css'
 import MessSetup from './pages/MessSetup.jsx'
 import MessLogs from './pages/MessLogs.jsx'
+import Dashboard from './pages/Dashboard.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
