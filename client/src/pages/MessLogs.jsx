@@ -8,6 +8,7 @@ an input field.
 */
 
 import React, { useEffect, useState } from 'react'
+import MonthlyChart from "../components/MonthlyChart";
 
 const MessLogs = () => {
     const token = localStorage.getItem("token");
@@ -58,6 +59,14 @@ const MessLogs = () => {
 
         fetchLogs();
     }
+
+    const downloadCSV = () => {
+        window.open(
+            `http://localhost:5000/api/export/csv/${year}/${month}`,
+            "_blank"
+        );
+    };
+
     return (
         <div>
             <h2>Daily Mess Logs</h2>
@@ -124,6 +133,12 @@ const MessLogs = () => {
                     </li>
                 ))
             }
+
+            {logs.length > 0 && <MonthlyChart logs={logs} />}
+
+            <button onClick={downloadCSV}>
+                Download CSV
+            </button>
         </div>
     )
 }
