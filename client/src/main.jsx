@@ -17,6 +17,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/signup" element={<Signup />} />
         <Route path="/mess-setup" element={<MessSetup />} />
         <Route path="/logs" element={<MessLogs />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
