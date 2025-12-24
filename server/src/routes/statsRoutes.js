@@ -45,9 +45,8 @@ router.get("/", auth, async (req, res) => {
 
     const amountSpent = thalisUsed * mess.amountPerThali;
 
-    // -----------------------------------------
-    // RESPONSE
-    // -----------------------------------------
+    const notify = daysRemaining <= 2;
+
     res.json({
       messName: mess.messName,
       totalThalis: mess.totalThalis,
@@ -58,6 +57,7 @@ router.get("/", auth, async (req, res) => {
       daysRemaining,
       amountPerThali: mess.amountPerThali,
       amountSpent,
+      notify,
     });
   } catch (error) {
     res.status(500).json({ message: "Error calculating stats" });
