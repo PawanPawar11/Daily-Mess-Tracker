@@ -23,21 +23,33 @@ export default function Dashboard() {
         <div style={{ padding: 20 }}>
             <h2>{stats.messName} — Dashboard</h2>
 
-            <div style={{ marginTop: 20 }}>
-                <p><b>Total Thalis:</b> {stats.totalThalis}</p>
-                <p><b>Thalis Used:</b> {stats.thalisUsed}</p>
-                <p><b>Remaining Thalis:</b> {stats.thalisRemaining}</p>
+            {stats.notify && (
+                <div
+                    style={{
+                        backgroundColor: "#ffe6e6",
+                        color: "#b30000",
+                        padding: "10px",
+                        borderRadius: "5px",
+                        marginBottom: "15px",
+                    }}
+                >
+                    ⚠️ Your mess plan is ending in {stats.daysRemaining} day(s).
+                </div>
+            )}
 
-                <hr />
+            <p><b>Total Thalis:</b> {stats.totalThalis}</p>
+            <p><b>Used Thalis:</b> {stats.thalisUsed}</p>
+            <p><b>Remaining Thalis:</b> {stats.thalisRemaining}</p>
 
-                <p><b>Days Passed:</b> {stats.daysPassed}</p>
-                <p><b>Days Remaining:</b> {stats.daysRemaining}</p>
+            <hr />
 
-                <hr />
+            <p><b>Days Passed:</b> {stats.daysPassed}</p>
+            <p><b>Days Remaining:</b> {stats.daysRemaining}</p>
 
-                <p><b>Amount Per Thali:</b> ₹{stats.amountPerThali}</p>
-                <p><b>Total Amount Spent:</b> ₹{stats.amountSpent}</p>
-            </div>
+            <hr />
+
+            <p><b>Amount Per Thali:</b> ₹{stats.amountPerThali}</p>
+            <p><b>Amount Spent:</b> ₹{stats.amountSpent}</p>
         </div>
     );
 }
