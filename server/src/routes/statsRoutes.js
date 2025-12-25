@@ -43,7 +43,7 @@ router.get("/", auth, async (req, res) => {
     const totalDays = mess.totalThalis / 2; // assuming 2 thalis max per day
     const daysRemaining = Math.ceil(totalDays - daysPassed);
 
-    const amountSpent = thalisUsed * mess.amountPerThali;
+    const amountSpent = (thalisUsed * mess.amountPerThali).toFixed(2);
 
     const notify = daysRemaining <= 2;
 

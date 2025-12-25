@@ -1,165 +1,146 @@
-/*
-So what do I need here?
-Well, I need firstly a calender that help the user to pick the date at which he ate at the mess.
-Then, I need a drop box that will tell user to select between three values 0, 1, 2. Which determines the
-number of times the user has gone to mess at that specific date.
-Then I will need the user to give me reason for not going to mess. I can easily do that by adding 
-an input field.
-*/
-
-import React, { useEffect, useState } from 'react'
-import MonthlyChart from "../components/MonthlyChart";
+import { useState, useEffect } from 'react'
+import Card from '../components/ui/Card'
+import Button from '../components/ui/Button'
+import { Link } from 'react-router-dom'
 
 const MessLogs = () => {
-    const token = localStorage.getItem("token");
+    const [logs, setLogs] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [currentDate, setCurrentDate] = useState(new Date())
 
-    const [logs, setLogs] = useState([]);
-    const [month, setMonth] = useState("01");
-    const [year, setYear] = useState("2025");
-
-    const [date, setDate] = useState("");
-    const [timesVisited, setTimesVisited] = useState(0);
-    const [reason, setReason] = useState("");
+    // Helper to format date
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
 
     const fetchLogs = async () => {
-        const res = await fetch(`http://localhost:3000/api/logs/month/${year}/${month}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+
+        try {
+            const res = await fetch(`http://localhost:3000/api/logs/month/${year}/${month}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setLogs(data);
             }
-        });
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
 
-        const data = await res.json();
+    const downloadCSV = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-        setLogs(data);
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+
+        try {
+            const res = await fetch(`http://localhost:3000/api/export/csv/${year}/${month}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `mess-logs-${year}-${month}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } else {
+                alert("Failed to download CSV");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error downloading CSV");
+        }
     }
 
     useEffect(() => {
         fetchLogs();
-    }, [year, month])
-
-    const submitLog = async (e) => {
-        e.preventDefault();
-
-        const res = await fetch("http://localhost:3000/api/logs/add", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                date,
-                timesVisited,
-                reason
-            })
-        })
-
-        const data = await res.json();
-
-        alert(data.message);
-
-        fetchLogs();
-    }
-
-    const downloadCSV = async () => {
-        const res = await fetch(
-            `http://localhost:3000/api/export/csv/${year}/${month}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-
-        if (!res.ok) {
-            alert("Failed to download CSV");
-            return;
-        }
-
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `mess-logs-${year}-${month}.csv`;
-        document.body.appendChild(a);
-        a.click();
-
-        a.remove();
-        window.URL.revokeObjectURL(url);
-    };
+    }, [currentDate])
 
     return (
-        <div>
-            <h2>Daily Mess Logs</h2>
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">Mess Logs</h1>
+                    <p className="text-secondary-500 dark:text-secondary-400 mt-1">History of meals</p>
+                </div>
+                <div className="flex gap-2">
+                    <Button onClick={downloadCSV} variant="secondary">
+                        Export CSV
+                    </Button>
+                    <Button onClick={fetchLogs} variant="secondary">
+                        Refresh
+                    </Button>
+                </div>
+            </div>
 
-            <form onSubmit={submitLog}>
-                <input
-                    type="date"
-                    required
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                />
-                <br /><br />
-
-                <select
-                    value={timesVisited}
-                    onChange={(e) => setTimesVisited(Number(e.target.value))}
-                >
-                    <option value={0}>0 times</option>
-                    <option value={1}>1 times</option>
-                    <option value={2}>2 times</option>
-                </select>
-                <br /><br />
-
-                {
-                    timesVisited === 0 && (
-                        <>
-                            <input
-                                type="text"
-                                placeholder="Reason for not going"
-                                value={reason}
-                                onChange={(e) => setReason(e.target.value)}
-                            />
-                            <br /><br />
-                        </>
-                    )
-                }
-
-                <button>Save Log</button>
-            </form>
-
-            <hr />
-
-            <h3>View Logs by Month</h3>
-
-            <select value={year} onChange={(e) => setYear(e.target.value)}>
-                <option>2025</option>
-                <option>2024</option>
-            </select>
-
-            <select value={month} onChange={(e) => setMonth(e.target.value)}>
-                {
-                    ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].map(m => (
-                        <option key={m}>{m}</option>
-                    ))
-                }
-            </select>
-            <br /><br />
-
-            {
-                logs.map((log) => (
-                    <li key={log._id}>
-                        {log.date} → {log.timesVisited} times
-                        {log.reason && ` (Reason: ${log.reason})`}
-                    </li>
-                ))
-            }
-
-            {logs.length > 0 && <MonthlyChart logs={logs} />}
-
-            <button onClick={downloadCSV}>
-                Download CSV
-            </button>
+            <Card className="overflow-hidden p-0">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-secondary-50 dark:bg-secondary-900 border-b border-secondary-200 dark:border-secondary-800">
+                            <tr>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Date</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Meals Taken</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-secondary-100 dark:divide-secondary-800 bg-white dark:bg-secondary-950">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="3" className="px-6 py-8 text-center text-secondary-500 dark:text-secondary-400">
+                                        Loading logs...
+                                    </td>
+                                </tr>
+                            ) : logs.length === 0 ? (
+                                <tr>
+                                    <td colSpan="3" className="px-6 py-12 text-center">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <p className="text-secondary-900 dark:text-white font-medium">No logs found</p>
+                                            <p className="text-secondary-500 dark:text-secondary-400 text-sm">Start tracking your meals to see history.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                logs.map((log) => (
+                                    <tr key={log._id} className="hover:bg-secondary-50 dark:hover:bg-secondary-900/50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-secondary-900 dark:text-white">
+                                            {formatDate(log.date)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600 dark:text-secondary-300">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${log.timesVisited > 0
+                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                                                : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
+                                                }`}>
+                                                {log.timesVisited === 1 ? '1 Meal' : log.timesVisited === 2 ? '2 Meals' : 'Skipped'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600 dark:text-secondary-300">
+                                            {log.reason || "-"}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </Card>
         </div>
     )
 }

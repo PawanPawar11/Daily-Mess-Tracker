@@ -17,6 +17,7 @@ router.post("/create", auth, async (req, res) => {
       mess.amountPerThali = amountPerThali;
 
       await mess.save();
+      return res.json({ message: "Mess updated", mess });
     }
 
     const newMess = Mess.create({

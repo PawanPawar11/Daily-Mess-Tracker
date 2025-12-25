@@ -1,4 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Card from '../components/ui/Card'
+import Input from '../components/ui/Input'
+import Button from '../components/ui/Button'
 
 const MessSetup = () => {
     const [form, setForm] = useState({
@@ -6,9 +10,9 @@ const MessSetup = () => {
         startDate: "",
         totalThalis: "",
         amountPerThali: ""
-    });
-
-    let token = localStorage.getItem("token");
+    })
+    const [loading, setLoading] = useState(false)
+    const navigate = useNavigate()
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value })
@@ -16,74 +20,115 @@ const MessSetup = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
 
-        const res = await fetch("http://localhost:3000/api/mess/create", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify(form)
-        })
+        const token = localStorage.getItem("token")
+        if (!token) {
+            alert("No token found")
+            setLoading(false)
+            return
+        }
 
-        const data = await res.json();
-
-        alert(data.message);
-    }
-
-    useEffect(() => {
-        const fetchMessData = async () => {
-            const res = await fetch("http://localhost:3000/api/mess/details", {
+        try {
+            const res = await fetch("http://localhost:3000/api/mess/create", {
+                method: "POST",
                 headers: {
-                    Authorization: `Bearer ${token}`
-                }
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(form)
             })
 
             const data = await res.json();
 
-            if (data && data.messName) setForm(data)
+            if (res.ok) {
+                alert("Mess Configuration Saved!")
+                navigate('/dashboard')
+            } else {
+                alert(data.message || "Setup failed")
+            }
+        } catch (error) {
+            console.error(error)
+            alert("Something went wrong")
+        } finally {
+            setLoading(false)
         }
+    }
 
-        fetchMessData();
-    }, [])
     return (
-        <div>
-            <h2>Mess Setup</h2>
+        <div className="max-w-2xl mx-auto">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">Mess Configuration</h1>
+                <p className="text-secondary-500 dark:text-secondary-400 mt-1">Set up your mess details and prepaid plan</p>
+            </div>
 
-            <form onSubmit={handleSubmit}>
-                <input
-                    type="text"
-                    name="messName"
-                    placeholder="Enter your mess name"
-                    value={form.messName}
-                    onChange={handleChange}
-                />
-                <br /><br />
-                <input
-                    type="date"
-                    name="startDate"
-                    value={form.startDate?.slice(0, 10)}
-                    onChange={handleChange}
-                />
-                <br /><br />
-                <input
-                    type="number"
-                    name="totalThalis"
-                    placeholder="Total Thalis"
-                    value={form.totalThalis}
-                    onChange={handleChange}
-                />
-                <br /><br />
-                <input
-                    type="number"
-                    name="amountPerThali"
-                    placeholder="Amount Per Thali"
-                    value={form.amountPerThali}
-                    onChange={handleChange}
-                />
-                <br /><br />
-                <button>Save Mess Info</button>
-            </form>
+            <Card>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <Input
+                        label="Mess Name"
+                        id="messName"
+                        type="text"
+                        name="messName"
+                        placeholder="e.g. Boys Hostel Mess"
+                        value={form.messName}
+                        onChange={handleChange}
+                        required
+                    />
+
+                    <Input
+                        label="Start Date"
+                        id="startDate"
+                        type="date"
+                        name="startDate"
+                        value={form.startDate}
+                        onChange={handleChange}
+                        required
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Input
+                            label="Total Thalis (Prepaid)"
+                            id="totalThalis"
+                            type="number"
+                            name="totalThalis"
+                            placeholder="60"
+                            value={form.totalThalis}
+                            onChange={handleChange}
+                            required
+                        />
+
+                        <Input
+                            label="Amount Per Thali"
+                            id="amountPerThali"
+                            type="number"
+                            name="amountPerThali"
+                            placeholder="50"
+                            value={form.amountPerThali}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            className="w-full"
+                            onClick={() => navigate('/dashboard')}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="primary"
+                            className="w-full"
+                            disabled={loading}
+                        >
+                            {loading ? 'Saving...' : 'Save Configuration'}
+                        </Button>
+                    </div>
+                </form>
+            </Card>
         </div>
     )
 }
