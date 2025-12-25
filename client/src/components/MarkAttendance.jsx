@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import Input from './ui/Input';
+import messService from '../services/messService';
 
 const MarkAttendance = ({ onUpdate }) => {
     const getTodayDate = () => {
@@ -18,26 +19,18 @@ const MarkAttendance = ({ onUpdate }) => {
     const [loading, setLoading] = useState(false);
 
     const fetchLogForDate = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
         const year = selectedDate.split('-')[0];
         const month = selectedDate.split('-')[1];
 
         try {
-            const res = await fetch(`http://localhost:3000/api/logs/month/${year}/${month}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const logs = await res.json();
-                const entry = logs.find(l => l.date === selectedDate);
-                if (entry) {
-                    setTimesVisited(entry.timesVisited);
-                    setReason(entry.reason || "");
-                } else {
-                    setTimesVisited(0);
-                    setReason("");
-                }
+            const logs = await messService.getMonthlyLogs(year, month);
+            const entry = logs.find(l => l.date === selectedDate);
+            if (entry) {
+                setTimesVisited(entry.timesVisited);
+                setReason(entry.reason || "");
+            } else {
+                setTimesVisited(0);
+                setReason("");
             }
         } catch (error) {
             console.error(error);
@@ -50,29 +43,15 @@ const MarkAttendance = ({ onUpdate }) => {
 
     const handleSubmit = async () => {
         setLoading(true);
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
         try {
-            const res = await fetch("http://localhost:3000/api/logs/add", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    date: selectedDate,
-                    timesVisited: timesVisited,
-                    reason: reason
-                })
+            await messService.addLog({
+                date: selectedDate,
+                timesVisited: timesVisited,
+                reason: reason
             });
 
-            if (res.ok) {
-                if (onUpdate) onUpdate();
-                alert("Attendance updated!");
-            } else {
-                alert("Failed to update attendance.");
-            }
+            if (onUpdate) onUpdate();
+            alert("Attendance updated!");
         } catch (error) {
             console.error(error);
             alert("Error updating attendance.");

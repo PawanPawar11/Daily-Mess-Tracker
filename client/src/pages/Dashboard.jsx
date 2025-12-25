@@ -4,6 +4,7 @@ import Button from '../components/ui/Button'
 import { Link } from 'react-router-dom'
 import MarkAttendance from '../components/MarkAttendance'
 import { useTheme } from '../context/ThemeContext'
+import messService from '../services/messService'
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -33,38 +34,26 @@ const Dashboard = () => {
     const [monthlyLogs, setMonthlyLogs] = useState([])
 
     const fetchDashboardData = async () => {
-        const token = localStorage.getItem("token")
-        if (!token) {
-            setLoading(false)
-            return
-        }
-
-        const date = new Date();
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-
         try {
-            const [statsRes, logsRes] = await Promise.all([
-                fetch("http://localhost:3000/api/stats", {
-                    headers: { "Authorization": `Bearer ${token}` }
-                }),
-                fetch(`http://localhost:3000/api/logs/month/${year}/${month}`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                })
+            setLoading(true) // Ensure loading is true when verifying
+            // No need to check token manually, service/api handles or fails
+
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+
+            // Parallel fetch using service
+            const [statsData, logsData] = await Promise.all([
+                messService.getStats(),
+                messService.getMonthlyLogs(year, month)
             ]);
 
-            if (statsRes.ok) {
-                const statsData = await statsRes.json();
-                setStats(statsData);
-            }
-
-            if (logsRes.ok) {
-                const logsData = await logsRes.json();
-                setMonthlyLogs(logsData);
-            }
+            setStats(statsData);
+            setMonthlyLogs(logsData);
 
         } catch (error) {
-            console.error(error)
+            console.error("Dashboard fetch error:", error)
+            // Optional: Handle 401 redirect if needed, but interceptor or protected route usually does this
         } finally {
             setLoading(false)
         }

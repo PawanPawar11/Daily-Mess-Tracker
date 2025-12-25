@@ -3,40 +3,28 @@ import { Link, useNavigate } from 'react-router-dom'
 import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
+import authService from '../services/authService'
 
 const Login = () => {
-    const [form, setForm] = useState({ email: "", password: "" })
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
-
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value })
-    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:3000/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form)
-            })
-
-            const data = await res.json();
-
-            if (res.ok) {
-                localStorage.setItem("token", data.token);
-                navigate('/dashboard');
-            } else {
-                alert(data.message || "Login failed");
-            }
+            await authService.login({ email, password });
+            alert("Login Successful")
+            navigate('/dashboard')
         } catch (error) {
-            console.error(error);
-            alert("Something went wrong");
+            console.error(error)
+            const message = error.response?.data?.message || "Login failed";
+            alert(message)
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
     }
 
@@ -55,8 +43,8 @@ const Login = () => {
                         type="email"
                         name="email"
                         placeholder="john@example.com"
-                        value={form.email}
-                        onChange={handleChange}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                     />
 
@@ -66,8 +54,8 @@ const Login = () => {
                         type="password"
                         name="password"
                         placeholder="••••••••"
-                        value={form.password}
-                        onChange={handleChange}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         required
                     />
 

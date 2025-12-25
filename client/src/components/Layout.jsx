@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from './ui/Button';
 import ThemeToggle from './ui/ThemeToggle';
+import authService from '../services/authService';
 
 const Layout = ({ children }) => {
     const location = useLocation();
@@ -9,7 +10,7 @@ const Layout = ({ children }) => {
     const token = localStorage.getItem('token');
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        authService.logout();
         navigate('/login');
     };
 

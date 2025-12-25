@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
-import { Link } from 'react-router-dom'
+import messService from '../services/messService'
 
 const MessLogs = () => {
     const [logs, setLogs] = useState([])
+    const [messName, setMessName] = useState("")
     const [loading, setLoading] = useState(true)
     const [currentDate, setCurrentDate] = useState(new Date())
 
@@ -19,19 +20,19 @@ const MessLogs = () => {
     }
 
     const fetchLogs = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
         const year = currentDate.getFullYear();
         const month = String(currentDate.getMonth() + 1).padStart(2, '0');
 
         try {
-            const res = await fetch(`http://localhost:3000/api/logs/month/${year}/${month}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setLogs(data);
+            // Fetch logs and mess details in parallel
+            const [logsData, messData] = await Promise.all([
+                messService.getMonthlyLogs(year, month),
+                messService.getMessDetails()
+            ]);
+
+            setLogs(logsData);
+            if (messData && messData.messName) {
+                setMessName(messData.messName);
             }
         } catch (error) {
             console.error(error);
@@ -41,29 +42,21 @@ const MessLogs = () => {
     }
 
     const downloadCSV = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
         const year = currentDate.getFullYear();
         const month = String(currentDate.getMonth() + 1).padStart(2, '0');
 
         try {
-            const res = await fetch(`http://localhost:3000/api/export/csv/${year}/${month}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
+            const data = await messService.downloadLogsCsv(year, month);
 
-            if (res.ok) {
-                const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `mess-logs-${year}-${month}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            } else {
-                alert("Failed to download CSV");
-            }
+            // Create Blob from data
+            const blob = new Blob([data], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mess-logs-${year}-${month}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
         } catch (error) {
             console.error(error);
             alert("Error downloading CSV");
@@ -97,6 +90,7 @@ const MessLogs = () => {
                         <thead className="bg-secondary-50 dark:bg-secondary-900 border-b border-secondary-200 dark:border-secondary-800">
                             <tr>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Date</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Mess Name</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Meals Taken</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-secondary-500 dark:text-secondary-400 uppercase tracking-wider">Reason</th>
                             </tr>
@@ -104,13 +98,13 @@ const MessLogs = () => {
                         <tbody className="divide-y divide-secondary-100 dark:divide-secondary-800 bg-white dark:bg-secondary-950">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="3" className="px-6 py-8 text-center text-secondary-500 dark:text-secondary-400">
+                                    <td colSpan="4" className="px-6 py-8 text-center text-secondary-500 dark:text-secondary-400">
                                         Loading logs...
                                     </td>
                                 </tr>
                             ) : logs.length === 0 ? (
                                 <tr>
-                                    <td colSpan="3" className="px-6 py-12 text-center">
+                                    <td colSpan="4" className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center gap-2">
                                             <p className="text-secondary-900 dark:text-white font-medium">No logs found</p>
                                             <p className="text-secondary-500 dark:text-secondary-400 text-sm">Start tracking your meals to see history.</p>
@@ -122,6 +116,9 @@ const MessLogs = () => {
                                     <tr key={log._id} className="hover:bg-secondary-50 dark:hover:bg-secondary-900/50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-secondary-900 dark:text-white">
                                             {formatDate(log.date)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600 dark:text-secondary-300">
+                                            {messName || "-"}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-600 dark:text-secondary-300">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${log.timesVisited > 0

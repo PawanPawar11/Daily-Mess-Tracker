@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
+import messService from '../services/messService'
 
 const MessSetup = () => {
     const [form, setForm] = useState({
@@ -22,31 +23,10 @@ const MessSetup = () => {
         e.preventDefault();
         setLoading(true);
 
-        const token = localStorage.getItem("token")
-        if (!token) {
-            alert("No token found")
-            setLoading(false)
-            return
-        }
-
         try {
-            const res = await fetch("http://localhost:3000/api/mess/create", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(form)
-            })
-
-            const data = await res.json();
-
-            if (res.ok) {
-                alert("Mess Configuration Saved!")
-                navigate('/dashboard')
-            } else {
-                alert(data.message || "Setup failed")
-            }
+            await messService.createOrUpdateMess(form);
+            alert("Mess Configuration Saved!")
+            navigate('/dashboard')
         } catch (error) {
             console.error(error)
             alert("Something went wrong")
